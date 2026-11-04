@@ -14,7 +14,81 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      global_cases: {
+        Row: {
+          case_data: Json
+          category: string
+          created_at: string
+          created_by: string | null
+          id: string
+          title: string
+        }
+        Insert: {
+          case_data: Json
+          category: string
+          created_at?: string
+          created_by?: string | null
+          id: string
+          title: string
+        }
+        Update: {
+          case_data?: Json
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      user_case_attempts: {
+        Row: {
+          case_id: string
+          created_at: string
+          id: string
+          result: Json | null
+          score: number
+          user_id: string
+        }
+        Insert: {
+          case_id: string
+          created_at?: string
+          id?: string
+          result?: Json | null
+          score?: number
+          user_id: string
+        }
+        Update: {
+          case_id?: string
+          created_at?: string
+          id?: string
+          result?: Json | null
+          score?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_progress: {
+        Row: {
+          dashboard_case_ids: string[]
+          profile: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          dashboard_case_ids?: string[]
+          profile?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          dashboard_case_ids?: string[]
+          profile?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
