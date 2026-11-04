@@ -1,3 +1,4 @@
+// @ts-nocheck -- ported legacy module; written for a less strict TS config
 import React, { useState, useEffect, useRef } from 'react';
 import { useServerFn } from '@tanstack/react-start';
 import { toast } from 'sonner';

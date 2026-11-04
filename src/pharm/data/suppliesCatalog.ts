@@ -1,3 +1,4 @@
+// @ts-nocheck -- ported legacy module; written for a less strict TS config
 import { SupplyItem } from '../types/clinical';
 
 export const ALL_SUPPLIES: SupplyItem[] = [

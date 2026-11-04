@@ -9,11 +9,11 @@ const GROQ_MODEL = "llama-3.3-70b-versatile";
 
 async function generateVariationWithGroq(topic: ChallengeTopicDefinition): Promise<{
   variation: Variation;
-  education?: ClinicalCase["educationalExplanations"];
+  education: ClinicalCase["educationalExplanations"] | undefined;
 }> {
   const apiKey = process.env["GROQ_API_KEY"];
   if (!apiKey) throw new Error("AI generation is not configured");
-  const example = topic.variations[0];
+  const example = topic.variations[0]!;
   const prompt = `You write realistic community-pharmacy emergency training cases for Ghana (Ghana STG 7th Ed).
 Topic: ${topic.topicTitle} (category: ${topic.category}, injury type: ${topic.injuryType}).
 Base complaint: ${topic.baseComplaint}
@@ -49,7 +49,7 @@ Example of style (do not copy): ${JSON.stringify(example)}`;
     throw new Error(res.status === 429 ? "AI is busy right now, please try again shortly" : "AI generation failed");
   }
   const json = (await res.json()) as { choices: { message: { content: string } }[] };
-  const raw = JSON.parse(json.choices[0].message.content);
+  const raw = JSON.parse(json.choices[0]?.message.content ?? '{}');
   const v = raw.vitals ?? {};
   const variation: Variation = {
     variationIndex: 0,
@@ -128,7 +128,7 @@ export const getNextCases = createServerFn({ method: "POST" })
       const rows = [];
       for (let i = 0; i < generated.length; i++) {
         const g = generated[i];
-        if (g.status !== "fulfilled") continue;
+        if (!g || g.status !== "fulfilled") continue;
         const { t, r } = g.value;
         const base = buildCaseFromTopicAndVariation({ ...t, variations: [r.variation] }, 0, now + i);
         const c: ClinicalCase = {
