@@ -379,3 +379,31 @@ button { -webkit-tap-highlight-color: transparent; }
   .patient-scene .patient-hud > div:nth-child(3) { width: 100%; }
   .patient-scene .patient-stage { min-height: 280px; }
 }
+
+/* Restrained palette: one brand teal, one warning gold, one danger red, warm neutrals. */
+:root { --accent-ink:#1f6f66; --accent-soft:#eaf4f0; --accent-line:#cfe3db; --warn-ink:#8a6420; --warn-soft:#faf4e6; --warn-line:#ecdcb8; --danger-ink:#a2463f; --danger-soft:#fbefed; --danger-line:#efd0cb; }
+.app-shell [class*="text-purple-"], .app-shell [class*="text-indigo-"], .app-shell [class*="text-violet-"],
+.app-shell [class*="text-fuchsia-"], .app-shell [class*="text-pink-"], .app-shell [class*="text-blue-"],
+.app-shell [class*="text-sky-"], .app-shell [class*="text-teal-"], .app-shell [class*="text-cyan-"],
+.app-shell [class*="text-emerald-"], .app-shell [class*="text-green-"], .app-shell [class*="text-lime-"] { color: var(--accent-ink) !important; }
+.app-shell [class*="text-amber-"], .app-shell [class*="text-yellow-"], .app-shell [class*="text-orange-"] { color: var(--warn-ink) !important; }
+.app-shell [class*="text-red-"], .app-shell [class*="text-rose-"] { color: var(--danger-ink) !important; }
+.app-shell [class*="bg-purple-"], .app-shell [class*="bg-indigo-"], .app-shell [class*="bg-violet-"],
+.app-shell [class*="bg-fuchsia-"], .app-shell [class*="bg-pink-"], .app-shell [class*="bg-blue-"],
+.app-shell [class*="bg-sky-"], .app-shell [class*="bg-teal-"], .app-shell [class*="bg-cyan-"][class*="/"],
+.app-shell [class*="bg-cyan-950"], .app-shell [class*="bg-emerald-"][class*="/"], .app-shell [class*="bg-emerald-950"] { background-color: var(--accent-soft) !important; }
+.app-shell [class*="bg-amber-"][class*="/"], .app-shell [class*="bg-orange-"][class*="/"], .app-shell [class*="bg-yellow-"][class*="/"] { background-color: var(--warn-soft) !important; }
+.app-shell [class*="bg-red-"][class*="/"], .app-shell [class*="bg-rose-"][class*="/"] { background-color: var(--danger-soft) !important; }
+.app-shell .bg-purple-500, .app-shell .bg-purple-600, .app-shell .bg-indigo-500, .app-shell .bg-indigo-600,
+.app-shell .bg-cyan-500, .app-shell .bg-cyan-600, .app-shell .bg-emerald-500, .app-shell .bg-emerald-600, .app-shell .bg-blue-500 { background-color: var(--teal) !important; color:#fff !important; }
+.app-shell .bg-amber-400, .app-shell .bg-amber-500 { background-color: var(--amber) !important; }
+.app-shell .bg-red-500, .app-shell .bg-red-600 { background-color: var(--danger) !important; }
+.app-shell [class*="border-purple-"], .app-shell [class*="border-indigo-"], .app-shell [class*="border-violet-"],
+.app-shell [class*="border-fuchsia-"], .app-shell [class*="border-pink-"], .app-shell [class*="border-blue-"],
+.app-shell [class*="border-cyan-"], .app-shell [class*="border-teal-"], .app-shell [class*="border-emerald-"] { border-color: var(--accent-line) !important; }
+.app-shell [class*="border-amber-"], .app-shell [class*="border-orange-"] { border-color: var(--warn-line) !important; }
+.app-shell [class*="border-red-"], .app-shell [class*="border-rose-"] { border-color: var(--danger-line) !important; }
+.app-shell [class*="bg-gradient-to-"] { background-image: none !important; background-color: var(--surface) !important; }
+.app-shell .bg-gradient-to-r[class*="from-cyan-500"], .app-shell [class*="to-purple-6"], .app-shell [class*="to-indigo-6"] { background-color: var(--teal) !important; color:#fff !important; }
+.app-shell button[class*="bg-cyan-600"], .app-shell button[class*="bg-emerald-600"], .app-shell .clinical-primary-action { color:#fff !important; border-radius: 14px; }
+.app-shell .panel-card, .app-shell [class*="rounded-2xl"], .app-shell [class*="rounded-3xl"] { box-shadow: 0 1px 2px rgba(24,59,57,.04), 0 8px 24px rgba(24,59,57,.05) !important; }
