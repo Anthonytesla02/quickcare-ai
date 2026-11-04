@@ -5,7 +5,7 @@ import type { ClinicalCase } from "./types/clinical";
 
 type Variation = ChallengeTopicDefinition["variations"][number];
 
-const GROQ_MODEL = "llama-3.3-70b-versatile";
+const GROQ_MODEL = "openai/gpt-oss-120b";
 
 async function generateVariationWithGroq(topic: ChallengeTopicDefinition): Promise<{
   variation: Variation;
