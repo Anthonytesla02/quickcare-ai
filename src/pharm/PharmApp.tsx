@@ -1,46 +1,74 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useServerFn } from '@tanstack/react-start';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { getNextCases } from './cases.functions';
 import { CaseEvaluationResult, ClinicalCase, IdentityProfile } from './types/clinical';
 import { INITIAL_IDP_PROFILE, updateProfileWithResult } from './game/rules';
 import {
-  CASE_LIBRARY, generateBatch5Challenges, getDailyChallengeCase, getWeeklyChallengeCase, getDateKey, getWeekKey
+  CASE_LIBRARY, getDailyChallengeCase, getWeeklyChallengeCase, getDateKey, getWeekKey
 } from './data/caseLibrary';
 import { ChallengeDashboard } from './components/challenge/ChallengeDashboard';
 import { SimulationView } from './components/challenge/SimulationView';
 import { DebriefView } from './components/challenge/DebriefView';
 import { LearningTab } from './components/learning/LearningTab';
 import { ProfileTab } from './components/profile/ProfileTab';
-import { Activity, BookOpen, UserRound, ShieldPlus } from 'lucide-react';
+import { Activity, BookOpen, UserRound, ShieldPlus, LogOut } from 'lucide-react';
 
-const STORAGE_PROFILE_KEY = 'pharm_emerg_idp_profile_v2';
 const STORAGE_SESSION_KEY = 'pharm_emerg_in_flight_case';
-const STORAGE_CASES_KEY = 'pharm_emerg_dashboard_cases_v5';
 
 type AppTab = 'challenge' | 'learning' | 'profile';
 
-export default function App() {
+export default function App({ userId, email }: { userId: string; email: string }) {
+  const fetchNextCases = useServerFn(getNextCases);
+  const [loaded, setLoaded] = useState(false);
+  const loadedRef = useRef(false);
   const [activeTab, setActiveTab] = useState<AppTab>('challenge');
   const [simState, setSimState] = useState<'dashboard' | 'simulating' | 'debrief'>('dashboard');
-  const [profile, setProfile] = useState<IdentityProfile>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_PROFILE_KEY);
-      if (saved) return JSON.parse(saved);
-    } catch (e) { console.warn('Failed to parse saved IDP profile:', e); }
-    return INITIAL_IDP_PROFILE;
-  });
+  const [profile, setProfile] = useState<IdentityProfile>(() => ({ ...INITIAL_IDP_PROFILE, username: email.split('@')[0] || INITIAL_IDP_PROFILE.username }));
   const [activeCase, setActiveCase] = useState<ClinicalCase | null>(null);
   const [lastResult, setLastResult] = useState<CaseEvaluationResult | null>(null);
-  const [hasUnfinishedSession, setHasUnfinishedSession] = useState(() => Boolean(localStorage.getItem(STORAGE_SESSION_KEY)));
+  const [hasUnfinishedSession, setHasUnfinishedSession] = useState(false);
   const [isGeneratingBatch, setIsGeneratingBatch] = useState(false);
-  const [dashboardCases, setDashboardCases] = useState<ClinicalCase[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_CASES_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+  const [dashboardCases, setDashboardCases] = useState<ClinicalCase[]>(CASE_LIBRARY);
+
+  // Load this account's own progress + its assigned shared cases.
+  useEffect(() => {
+    let cancelled = false;
+    setHasUnfinishedSession(Boolean(localStorage.getItem(`${STORAGE_SESSION_KEY}_${userId}`)));
+    (async () => {
+      const { data: prog } = await supabase.from('user_progress').select('profile, dashboard_case_ids').eq('user_id', userId).maybeSingle();
+      let extra: ClinicalCase[] = [];
+      const ids = prog?.dashboard_case_ids ?? [];
+      if (ids.length) {
+        const { data: rows } = await supabase.from('global_cases').select('id, case_data').in('id', ids);
+        const byId = new Map((rows ?? []).map(r => [r.id, r.case_data as unknown as ClinicalCase]));
+        extra = ids.map(id => byId.get(id)).filter((c): c is ClinicalCase => Boolean(c));
       }
-    } catch (e) { console.warn('Failed to parse dashboard cases from localStorage:', e); }
-    return CASE_LIBRARY;
-  });
+      if (cancelled) return;
+      if (prog?.profile) setProfile(prog.profile as unknown as IdentityProfile);
+      setDashboardCases([...CASE_LIBRARY, ...extra]);
+      loadedRef.current = true;
+      setLoaded(true);
+    })();
+    return () => { cancelled = true; };
+  }, [userId]);
+
+  // Persist progress for this account only.
+  useEffect(() => {
+    if (!loadedRef.current) return;
+    const libIds = new Set(CASE_LIBRARY.map(c => c.id));
+    const t = window.setTimeout(() => {
+      supabase.from('user_progress').upsert({
+        user_id: userId,
+        profile: profile as never,
+        dashboard_case_ids: dashboardCases.filter(c => !libIds.has(c.id)).map(c => c.id),
+        updated_at: new Date().toISOString(),
+      }).then(({ error }) => { if (error) console.warn('Failed to save progress:', error.message); });
+    }, 400);
+    return () => window.clearTimeout(t);
+  }, [profile, dashboardCases, userId, loaded]);
+
   const [currentDateKey, setCurrentDateKey] = useState(() => getDateKey(new Date()));
   const [currentWeekKey, setCurrentWeekKey] = useState(() => getWeekKey(new Date()));
   const [dailyCase, setDailyCase] = useState(() => getDailyChallengeCase(new Date()));
@@ -59,22 +87,13 @@ export default function App() {
     return () => clearInterval(interval);
   }, [currentDateKey, currentWeekKey]);
 
-  useEffect(() => {
-    try { localStorage.setItem(STORAGE_PROFILE_KEY, JSON.stringify(profile)); }
-    catch (e) { console.warn('Failed to save profile to localStorage:', e); }
-  }, [profile]);
-  useEffect(() => {
-    try { localStorage.setItem(STORAGE_CASES_KEY, JSON.stringify(dashboardCases)); }
-    catch (e) { console.warn('Failed to save dashboard cases to localStorage:', e); }
-  }, [dashboardCases]);
-
   const handleStartCase = (clinicalCase: ClinicalCase) => {
     setActiveCase(clinicalCase);
     setSimState('simulating');
     setActiveTab('challenge');
     setLastResult(null);
     try {
-      localStorage.setItem(STORAGE_SESSION_KEY, JSON.stringify({ caseId: clinicalCase.id }));
+      localStorage.setItem(`${STORAGE_SESSION_KEY}_${userId}`, JSON.stringify({ caseId: clinicalCase.id }));
       setHasUnfinishedSession(true);
     } catch (e) { console.warn('Session save failed:', e); }
   };
@@ -86,7 +105,7 @@ export default function App() {
 
   const handleResumeSession = () => {
     try {
-      const saved = localStorage.getItem(STORAGE_SESSION_KEY);
+      const saved = localStorage.getItem(`${STORAGE_SESSION_KEY}_${userId}`);
       if (saved) {
         const { caseId } = JSON.parse(saved);
         const found = dashboardCases.find(c => c.id === caseId) || CASE_LIBRARY.find(c => c.id === caseId) || CASE_LIBRARY[0];
@@ -97,9 +116,11 @@ export default function App() {
   const handleFinishCase = (result: CaseEvaluationResult) => {
     if (!activeCase) return;
     setProfile(updateProfileWithResult(profile, result, activeCase.id, activeCase.title, activeCase.category));
+    supabase.from('user_case_attempts').insert({ user_id: userId, case_id: activeCase.id, score: Math.round(result.score), result: result as never })
+      .then(({ error }) => { if (error) console.warn('Failed to record attempt:', error.message); });
     setLastResult(result);
     setSimState('debrief');
-    try { localStorage.removeItem(STORAGE_SESSION_KEY); setHasUnfinishedSession(false); }
+    try { localStorage.removeItem(`${STORAGE_SESSION_KEY}_${userId}`); setHasUnfinishedSession(false); }
     catch (e) { console.warn('Error clearing session:', e); }
   };
   const handleNextCase = () => {
@@ -107,14 +128,22 @@ export default function App() {
     const currentIndex = dashboardCases.findIndex(c => c.id === activeCase.id);
     handleStartCase(dashboardCases[(currentIndex + 1) % dashboardCases.length] || CASE_LIBRARY[0]);
   };
-  const handleGenerateBatch5 = () => {
+  const handleGenerateBatch5 = async () => {
+    if (isGeneratingBatch) return;
     setIsGeneratingBatch(true);
-    // Yield once so the in-progress state can paint before the local batch generator runs.
-    window.setTimeout(() => {
-      try { setDashboardCases(prev => [...prev, ...generateBatch5Challenges(Date.now())]); }
-      catch (err) { console.error('Error generating batch 5 challenges:', err); }
-      finally { setIsGeneratingBatch(false); }
-    }, 0);
+    try {
+      const res = await fetchNextCases({ data: { count: 5, excludeIds: dashboardCases.map(c => c.id) } });
+      setDashboardCases(prev => {
+        const have = new Set(prev.map(c => c.id));
+        return [...prev, ...res.cases.filter(c => !have.has(c.id))];
+      });
+      toast.success(`${res.cases.length} new case${res.cases.length === 1 ? '' : 's'} added`, {
+        description: res.reused ? `${res.reused} from the shared library, ${res.generated} newly generated` : 'Freshly generated by AI',
+      });
+    } catch (err) {
+      console.error('Error loading new cases:', err);
+      toast.error(err instanceof Error ? err.message : 'Could not load new cases');
+    } finally { setIsGeneratingBatch(false); }
   };
   const selectTab = (tab: AppTab) => {
     setActiveTab(tab);
@@ -161,10 +190,15 @@ export default function App() {
               </span>
               <span className="grid h-8 w-8 place-items-center rounded-full bg-[#dff0e9] text-xs font-black text-[#176f64]">{profile.username.charAt(0)}</span>
             </button>
+            <button type="button" aria-label="Sign out" onClick={() => supabase.auth.signOut()}
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-[#dce7e2] bg-white text-[#687d77] transition hover:bg-[#f5f8f5]">
+              <LogOut size={16} />
+            </button>
           </div>
         </header>
 
-      <main className={`app-main mx-auto w-full max-w-7xl flex-1 px-3 py-4 sm:px-6 sm:py-6 ${isSimulationActive && activeTab === 'challenge' ? '!p-0' : ''}`}>
+      {!loaded && <div className="mx-auto w-full max-w-7xl space-y-3 px-3 py-4"><div className="skeleton h-28" /><div className="skeleton h-40" /><div className="skeleton h-40" /></div>}
+      {loaded && <main className={`app-main mx-auto w-full max-w-7xl flex-1 px-3 py-4 sm:px-6 sm:py-6 ${isSimulationActive && activeTab === 'challenge' ? '!p-0' : ''}`}>
         {activeTab === 'challenge' && <>
           {simState === 'dashboard' && <ChallengeDashboard profile={profile} onStartCase={handleStartCase}
             hasUnfinishedSession={hasUnfinishedSession} onResumeSession={handleResumeSession} dashboardCases={dashboardCases}
@@ -181,7 +215,7 @@ export default function App() {
         )}
         {activeTab === 'learning' && <LearningTab />}
         {activeTab === 'profile' && <ProfileTab profile={profile} onResetProfile={() => setProfile(INITIAL_IDP_PROFILE)} />}
-      </main>
+      </main>}
 
       <nav className="bottom-dock" aria-label="App navigation">
         {navItems.map(({ id, label, icon: Icon }) => (
