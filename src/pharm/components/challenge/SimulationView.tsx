@@ -1,4 +1,5 @@
 // @ts-nocheck -- ported legacy module; written for a less strict TS config
+import { CaseTutor } from './CaseTutor';
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   AppliedAction, 
@@ -714,6 +715,7 @@ export const SimulationView: React.FC<SimulationViewProps> = ({
           </div>
         </div>
       )}
+      <CaseTutor clinicalCase={clinicalCase} />
     </div>
   );
 };
