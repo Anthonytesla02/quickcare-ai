@@ -249,6 +249,9 @@ export function evaluateCasePerformance(
     }
   }
 
+  // Global XP reduction: all awards are cut by 10%.
+  xpEarned = Math.round(xpEarned * 0.9);
+
   // Achievement Badges
   const unlockedBadges: string[] = [];
   const existingBadges = new Set(currentProfile?.unlockedBadges || []);

@@ -420,3 +420,8 @@ button { -webkit-tap-highlight-color: transparent; }
   box-shadow: 0 6px 16px rgba(8,145,178,.26) !important;
 }
 .app-shell .debrief-actions button.bg-cyan-600[class*="bg-cyan-"]:hover { background-color: var(--go-blue-hi) !important; }
+.app-shell button[data-testid="button-start-daily-case"] {
+  background-color: var(--go-blue) !important; color:#fff !important;
+  box-shadow: 0 6px 16px rgba(8,145,178,.26) !important;
+}
+.app-shell button[data-testid="button-start-daily-case"]:hover { background-color: var(--go-blue-hi) !important; }
