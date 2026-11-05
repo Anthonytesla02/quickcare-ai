@@ -177,7 +177,7 @@ button, input { font: inherit; }
 button { -webkit-tap-highlight-color: transparent; }
 :focus-visible { outline: 3px solid #60a99d; outline-offset: 2px; }
 
-/* Translate the legacy utility palette into PharmEmerg's calm clinical surfaces. */
+/* Translate the legacy utility palette into QuickCare AI's calm clinical surfaces. */
 .bg-slate-950 { background-color: #eef3ef !important; }
 .bg-slate-900 { background-color: #fff !important; }
 .bg-slate-800 { background-color: #e8efeb !important; }
