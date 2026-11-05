@@ -8,10 +8,10 @@ export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>) => ({ redirect: typeof s["redirect"] === "string" ? s["redirect"] : undefined }),
   head: () => ({
     meta: [
-      { title: "Sign in — PharmEmerg" },
-      { name: "description", content: "Sign in to PharmEmerg to save your progress and access shared training cases." },
-      { property: "og:title", content: "Sign in — PharmEmerg" },
-      { property: "og:description", content: "Sign in to PharmEmerg to save your progress." },
+      { title: "Sign in — QuickCare AI" },
+      { name: "description", content: "Sign in to QuickCare AI to save your progress and access shared training cases." },
+      { property: "og:title", content: "Sign in — QuickCare AI" },
+      { property: "og:description", content: "Sign in to QuickCare AI to save your progress." },
     ],
   }),
   component: AuthPage,
@@ -69,7 +69,7 @@ function AuthPage() {
         <div className="mb-6 flex items-center gap-3">
           <span className="grid h-11 w-11 place-items-center rounded-[14px] bg-[#dff0e9] text-[#156d63]"><ShieldPlus size={22} /></span>
           <div>
-            <h1 className="font-black text-xl tracking-[-.04em]">PharmEmerg</h1>
+            <h1 className="font-black text-xl tracking-[-.04em]">QuickCare AI</h1>
             <p className="text-xs text-slate-400">{mode === "signin" ? "Welcome back" : "Create your account"}</p>
           </div>
         </div>

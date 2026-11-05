@@ -177,7 +177,7 @@ button, input { font: inherit; }
 button { -webkit-tap-highlight-color: transparent; }
 :focus-visible { outline: 3px solid #60a99d; outline-offset: 2px; }
 
-/* Translate the legacy utility palette into PharmEmerg's calm clinical surfaces. */
+/* Translate the legacy utility palette into QuickCare AI's calm clinical surfaces. */
 .bg-slate-950 { background-color: #eef3ef !important; }
 .bg-slate-900 { background-color: #fff !important; }
 .bg-slate-800 { background-color: #e8efeb !important; }
@@ -407,3 +407,16 @@ button { -webkit-tap-highlight-color: transparent; }
 .app-shell .bg-gradient-to-r[class*="from-cyan-500"], .app-shell [class*="to-purple-6"], .app-shell [class*="to-indigo-6"] { background-color: var(--teal) !important; color:#fff !important; }
 .app-shell button[class*="bg-cyan-600"], .app-shell button[class*="bg-emerald-600"], .app-shell .clinical-primary-action { color:#fff !important; border-radius: 14px; }
 .app-shell .panel-card, .app-shell [class*="rounded-2xl"], .app-shell [class*="rounded-3xl"] { box-shadow: 0 1px 2px rgba(24,59,57,.04), 0 8px 24px rgba(24,59,57,.05) !important; }
+
+/* The two outcome actions keep their own signal colors: green to finish a case, blue to move on. */
+:root { --go-green:#059669; --go-green-hi:#10b981; --go-blue:#0891b2; --go-blue-hi:#06b6d4; }
+.app-shell button[data-testid="button-finish-case"][class*="bg-emerald-"] {
+  background-color: var(--go-green) !important; color:#fff !important;
+  box-shadow: 0 6px 16px rgba(5,150,105,.26) !important;
+}
+.app-shell button[data-testid="button-finish-case"][class*="bg-emerald-"]:hover { background-color: var(--go-green-hi) !important; }
+.app-shell .debrief-actions button.bg-cyan-600[class*="bg-cyan-"] {
+  background-color: var(--go-blue) !important; color:#fff !important;
+  box-shadow: 0 6px 16px rgba(8,145,178,.26) !important;
+}
+.app-shell .debrief-actions button.bg-cyan-600[class*="bg-cyan-"]:hover { background-color: var(--go-blue-hi) !important; }
