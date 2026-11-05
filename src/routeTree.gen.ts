@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedPlayRouteImport } from './routes/_authenticated/play'
+import { Route as ApiCaseTutorRouteImport } from './routes/api/case-tutor'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -33,16 +34,23 @@ const AuthenticatedPlayRoute = AuthenticatedPlayRouteImport.update({
   path: '/play',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiCaseTutorRoute = ApiCaseTutorRouteImport.update({
+  id: '/api/case-tutor',
+  path: '/api/case-tutor',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/play': typeof AuthenticatedPlayRoute
+  '/api/case-tutor': typeof ApiCaseTutorRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/play': typeof AuthenticatedPlayRoute
+  '/api/case-tutor': typeof ApiCaseTutorRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -50,19 +58,27 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/play': typeof AuthenticatedPlayRoute
+  '/api/case-tutor': typeof ApiCaseTutorRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/play'
+  fullPaths: '/' | '/auth' | '/play' | '/api/case-tutor'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/play'
-  id: '__root__' | '/' | '/_authenticated' | '/auth' | '/_authenticated/play'
+  to: '/' | '/auth' | '/play' | '/api/case-tutor'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/play'
+    | '/api/case-tutor'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiCaseTutorRoute: typeof ApiCaseTutorRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -95,6 +111,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlayRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/case-tutor': {
+      id: '/api/case-tutor'
+      path: '/api/case-tutor'
+      fullPath: '/api/case-tutor'
+      preLoaderRoute: typeof ApiCaseTutorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -113,6 +136,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiCaseTutorRoute: ApiCaseTutorRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
