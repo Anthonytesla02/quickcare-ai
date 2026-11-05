@@ -684,8 +684,8 @@ export const ChallengeDashboard: React.FC<ChallengeDashboardProps> = ({
                         "{c.patientStatement}"
                       </p>
 
-                      <div className="text-[10px] text-slate-400 line-clamp-1">
-                        Complaint: {c.presentingComplaint}
+                      <div className="text-[11px] leading-relaxed text-slate-400">
+                        <span className="font-semibold">Complaint:</span> {c.presentingComplaint}
                       </div>
                     </div>
 

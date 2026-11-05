@@ -379,6 +379,7 @@ export const SimulationView: React.FC<SimulationViewProps> = ({
 
             {isFindingsFoldOpen && (
               <div className="p-3 pt-0 border-t border-slate-800/80 space-y-2">
+                <p className="pt-2 text-xs leading-relaxed text-slate-300"><strong className="text-white">Complaint:</strong> {clinicalCase.presentingComplaint}</p>
                 <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-slate-300 text-xs">
                   {clinicalCase.visibleFindings.map((finding, idx) => (
                     <li key={idx} className="flex items-start gap-2 bg-slate-950/70 p-2.5 rounded-xl border border-slate-800/80">
