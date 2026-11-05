@@ -164,13 +164,13 @@ export default function App({ userId, email }: { userId: string; email: string }
               data-testid="button-brand-home"
               onClick={() => selectTab('challenge')}
               className="flex min-w-0 items-center gap-3 border-0 bg-transparent text-left"
-              aria-label="PharmEmerg challenge hub"
+              aria-label="QuickCare AI challenge hub"
             >
               <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[14px] bg-[#dff0e9] text-[#156d63]">
                 <ShieldPlus size={21} strokeWidth={2.2} />
               </span>
               <span className="min-w-0">
-                <span className="block font-black leading-tight tracking-[-.04em] text-[#183b39]">PharmEmerg</span>
+                <span className="block font-black leading-tight tracking-[-.04em] text-[#183b39]">QuickCare AI</span>
                 <span className="hidden text-[10px] font-semibold tracking-wide text-[#70837e] sm:block">POCKET CLINICAL COACH</span>
               </span>
             </button>
