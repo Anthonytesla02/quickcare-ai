@@ -134,7 +134,13 @@ export interface ClinicalCase {
   patientStatement: string;
   caregiverStatement?: string;
   visibleFindings: string[];
-  affectedBodyRegion: BodyRegion;
+  affectedBodyRegion: BodyRegion; // always derived from anatomicalSite
+  /** Canonical precise injury site (see data/anatomy.ts). Single source of truth for location. */
+  anatomicalSite?: string;
+  /** Other injured sites explicitly described (e.g. a scald on thigh AND hand). */
+  secondarySites?: string[];
+  /** Phrases that mention a body part that is NOT injured (e.g. "radiating to left arm"). */
+  nonInjuredMentions?: string[];
   injuryType: 
     | 'laceration' 
     | 'abrasion' 
