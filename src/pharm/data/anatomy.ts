@@ -31,7 +31,8 @@ const LIMB_BASES: Record<string, LimbBase> = {
   upper_arm: { limb: 'arm', zone: 'upper_arm', label: 'Upper Arm (Brachial)', keywords: [/\bbrachial\b/, /\bhumerus\b/, /\bupper arm\b/] },
   forearm: { limb: 'arm', zone: 'forearm', label: 'Forearm', keywords: [/\bforearm\b/, /\belbow\b/, /\barm\b/] },
   dorsal_hand: { limb: 'hand', zone: 'hand', label: 'Back of Hand', keywords: [/\bdors(al|um of)( right| left)? hand\b/] },
-  hand: { limb: 'hand', zone: 'hand', label: 'Hand', keywords: [/\bhands?\b/, /\bfingers?\b/, /\bwrist\b/, /\bpalm\b/] },
+  wrist: { limb: 'hand', zone: 'hand', label: 'Wrist', keywords: [/\bwrist\b/] },
+  hand: { limb: 'hand', zone: 'hand', label: 'Hand', keywords: [/\bhands?\b/, /\bfingers?\b/, /\bthumb\b/, /\bpalm\b/] },
 };
 
 const NON_LIMB_SITES: AnatomicalSiteDef[] = [
@@ -75,7 +76,7 @@ export function sitesForRegions(regions: BodyRegion[]): string[] {
   return Object.values(ANATOMICAL_SITES).filter(s => regions.includes(s.region)).map(s => s.id);
 }
 
-type Mention = { key: string; limb: 'leg' | 'arm' | 'hand'; side?: 'right' | 'left'; text: string };
+type Mention = { key: string; limb: 'leg' | 'arm' | 'hand'; side?: 'right' | 'left'; text: string; index: number };
 
 function stripIgnored(text: string, ignored: string[] = []): string {
   let t = ` ${text.toLowerCase()} `;
@@ -94,13 +95,13 @@ export function findLimbMentions(text: string, ignored: string[] = []): Mention[
       while ((m = g.exec(t))) {
         const before = t.slice(Math.max(0, m.index - 25), m.index);
         const sideMatch = before.match(/\b(right|left)\b(?!.*\b(right|left)\b)/);
-        found.push({ key, limb: b.limb, side: sideMatch?.[1] as Mention['side'], text: m[0] });
+        found.push({ key, limb: b.limb, side: sideMatch?.[1] as Mention['side'], text: m[0], index: m.index });
       }
       // Blank out matched spans so less specific keywords don't double count.
       t = t.replace(new RegExp(re.source, 'g'), (s) => ' '.repeat(s.length));
     }
   }
-  return found;
+  return found.sort((a, b) => a.index - b.index);
 }
 
 function textOf(c: ClinicalCase): string {
