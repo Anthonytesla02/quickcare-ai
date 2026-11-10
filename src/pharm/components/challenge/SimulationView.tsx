@@ -11,6 +11,7 @@ import {
   SupplyItem 
 } from '../../types/clinical';
 import { Patient2DScene } from '../patient/Patient2DScene';
+import { normalizeCaseAnatomy, regionLabel, getCaseSite } from '../../data/anatomy';
 import { evaluateCasePerformance } from '../../game/rules';
 import { 
   Clock, 
@@ -42,11 +43,14 @@ interface SimulationViewProps {
 }
 
 export const SimulationView: React.FC<SimulationViewProps> = ({
-  clinicalCase,
+  clinicalCase: rawCase,
   profile,
   onFinishCase,
   onExit
 }) => {
+  // One canonical location drives the label, diagram, highlighted region and treatment target.
+  const clinicalCase = React.useMemo(() => normalizeCaseAnatomy(rawCase), [rawCase]);
+  const injurySite = getCaseSite(clinicalCase);
   const [selectedRegion, setSelectedRegion] = useState<BodyRegion>(clinicalCase.affectedBodyRegion);
   const [selectedSupply, setSelectedSupply] = useState<SupplyItem | null>(null);
   const [appliedActions, setAppliedActions] = useState<AppliedAction[]>([]);
@@ -153,7 +157,9 @@ export const SimulationView: React.FC<SimulationViewProps> = ({
       }
     } else if (isEssential) {
       if (supplyToApply.id === 'arterial_tourniquet') {
-        feedback = 'EXCELLENT: Combat arterial tourniquet applied 5cm proximal to arterial bleeding site. Hemorrhage halted!';
+        feedback = target === clinicalCase.affectedBodyRegion
+          ? `EXCELLENT: Arterial tourniquet applied high and tight, 5-7 cm proximal to the ${injurySite.label.toLowerCase()} wound. Hemorrhage halted!`
+          : `WRONG SITE: Tourniquet placed on ${regionLabel(clinicalCase, target)}, but the bleeding is from the ${injurySite.label.toLowerCase()}.`;
       } else if (supplyToApply.id === 'epinephrine_adult' || supplyToApply.id === 'epinephrine_pediatric') {
         feedback = 'LIFE-SAVING: Intramuscular epinephrine administered into anterolateral thigh. Airway edema halting!';
       } else if (supplyToApply.id === 'cool_water') {
@@ -161,9 +167,9 @@ export const SimulationView: React.FC<SimulationViewProps> = ({
       } else if (supplyToApply.id === 'burn_cling_film') {
         feedback = 'CORRECT: Sterile non-adherent clear burn sheet loosely applied over burn wound.';
       } else if (supplyToApply.id === 'padded_splint') {
-        feedback = 'APPROPRIATE: Rigid padded splint immobilized joints above and below fracture.';
+        feedback = `APPROPRIATE: Rigid padded splint applied to the ${regionLabel(clinicalCase, target).toLowerCase()}, immobilizing joints above and below the injury.`;
       } else {
-        feedback = `Appropriate protocol: ${supplyToApply.name} applied to ${target.replace('_', ' ')}.`;
+        feedback = `Appropriate protocol: ${supplyToApply.name} applied to ${regionLabel(clinicalCase, target).toLowerCase()}.`;
       }
     } else {
       feedback = `${supplyToApply.name} applied.`;
@@ -522,7 +528,7 @@ export const SimulationView: React.FC<SimulationViewProps> = ({
                     onClick={() => handleApplySupply(selectedSupply)}
                     className="rounded-lg bg-cyan-600 px-3 py-1.5 text-[11px] font-bold text-white shadow transition hover:bg-cyan-500"
                   >
-                    Apply to {selectedRegion.replace('_', ' ')}
+                    Apply to {regionLabel(clinicalCase, selectedRegion)}
                   </button>
                 </div>
               )}

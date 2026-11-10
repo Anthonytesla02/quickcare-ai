@@ -1,6 +1,7 @@
 // @ts-nocheck -- ported legacy module; written for a less strict TS config
 import React, { useState } from 'react';
 import { BodyRegion, ClinicalCase, PatientConditionState } from '../../types/clinical';
+import { getCaseSite } from '../../data/anatomy';
 import { 
   AlertCircle, 
   CheckCircle2, 
@@ -36,7 +37,13 @@ export const Patient2DScene: React.FC<Patient2DSceneProps> = ({
   isWheezing = false,
   hasAngioedema = false
 }) => {
-  const { patient, affectedBodyRegion, injuryType } = clinicalCase;
+  const { patient, injuryType } = clinicalCase;
+  // Canonical site: drives the focus label, isolated diagram, highlighted region and wound position.
+  const site = getCaseSite(clinicalCase);
+  const affectedBodyRegion = site.region;
+  // Vertical offset of the wound on the isolated limb diagrams (base art sits at lower leg / forearm).
+  const legDy = { thigh: -90, knee: -40, lower_leg: 0, ankle_foot: 60 }[site.zone] ?? 0;
+  const armDy = { upper_arm: -85, forearm: 0 }[site.zone] ?? 0;
   const isFemale = patient.gender === 'female';
   const isChild = patient.ageGroup === 'child';
   const isElderly = patient.ageGroup === 'elderly';
@@ -65,27 +72,7 @@ export const Patient2DScene: React.FC<Patient2DSceneProps> = ({
   const hasHeimlich = allApplied.includes('heimlich_thrusts');
 
   // Friendly label for the focused body part
-  const getBodyPartTitle = () => {
-    switch (affectedBodyRegion) {
-      case 'right_hand':
-      case 'left_hand':
-        return 'Hand, Wrist & Fingers';
-      case 'right_arm':
-      case 'left_arm':
-        return 'Upper Limb & Forearm';
-      case 'right_leg':
-      case 'left_leg':
-        return 'Lower Limb, Ankle & Foot';
-      case 'head_face':
-        return 'Head, Face & Airway';
-      case 'chest':
-        return 'Thorax & Cardiorespiratory Zone';
-      case 'abdomen':
-        return 'Abdominal & Visceral Zone';
-      default:
-        return 'Affected Anatomical Region';
-    }
-  };
+  const getBodyPartTitle = () => site.label;
 
   return (
     <div className="patient-scene relative w-full max-w-full h-full min-h-[440px] rounded-2xl border p-3 sm:p-4 flex flex-col justify-between overflow-hidden shadow-2xl">
@@ -137,7 +124,7 @@ export const Patient2DScene: React.FC<Patient2DSceneProps> = ({
         {/* Status badges */}
         <div className="flex items-center gap-1.5">
           <span className="bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider">
-            {affectedBodyRegion.replace('_', ' ')}
+            {site.label}
           </span>
           {isDressed && (
             <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2 py-1 rounded-lg text-[10px] font-bold">
@@ -280,6 +267,13 @@ export const Patient2DScene: React.FC<Patient2DSceneProps> = ({
                     )}
                   </g>
                 )}
+                {injuryType === 'bite_sting' && (
+                  <g data-testid="injury-site-marker" data-site={site.id}>
+                    <ellipse cx="160" cy="150" rx="26" ry="22" fill="#581c87" fillOpacity="0.4" stroke="#a855f7" strokeWidth="1.5" />
+                    <circle cx="154" cy="148" r="3" fill="#7f1d1d" stroke="#ef4444" strokeWidth="1.5" />
+                    <circle cx="166" cy="148" r="3" fill="#7f1d1d" stroke="#ef4444" strokeWidth="1.5" />
+                  </g>
+                )}
               </svg>
             )}
 
@@ -310,6 +304,8 @@ export const Patient2DScene: React.FC<Patient2DSceneProps> = ({
                   </g>
                 )}
 
+                <g transform={`translate(0, ${legDy})`} data-testid="injury-site-marker" data-site={site.id}>
+                <circle cx="125" cy="160" r="34" fill="none" stroke="#f59e0b" strokeWidth="1.5" strokeDasharray="4,3" />
                 {/* Arterial Spurting Bleed */}
                 {injuryType === 'arterial_bleed' && !isTourniquetApplied && (
                   <g className="animate-pulse">
@@ -357,6 +353,8 @@ export const Patient2DScene: React.FC<Patient2DSceneProps> = ({
                     )}
                   </g>
                 )}
+
+                </g>
 
                 {/* Splint on Leg / Ankle */}
                 {isSplinted && (
@@ -497,6 +495,8 @@ export const Patient2DScene: React.FC<Patient2DSceneProps> = ({
                   </g>
                 )}
 
+                <g transform={`translate(0, ${armDy})`} data-testid="injury-site-marker" data-site={site.id}>
+                <circle cx="145" cy="155" r="30" fill="none" stroke="#f59e0b" strokeWidth="1.5" strokeDasharray="4,3" />
                 {/* Laceration / Fracture on Forearm */}
                 {injuryType === 'laceration' && !isDressed && (
                   <g>
@@ -508,6 +508,29 @@ export const Patient2DScene: React.FC<Patient2DSceneProps> = ({
                   <g>
                     <rect x="120" y="130" width="50" height="50" rx="6" fill="#f1f5f9" stroke="#0284c7" strokeWidth="2" />
                     <text x="145" y="158" textAnchor="middle" fill="#0369a1" fontSize="8" fontWeight="black">BANDAGED</text>
+                  </g>
+                )}
+
+                {injuryType === 'arterial_bleed' && !isTourniquetApplied && (
+                  <g className="animate-pulse">
+                    <circle cx="145" cy="155" r="22" fill="#dc2626" fillOpacity="0.7" />
+                    <path d="M145 150 Q105 130 85 140" stroke="#dc2626" strokeWidth="4" fill="none" strokeLinecap="round" />
+                  </g>
+                )}
+                {(injuryType === 'burn_thermal' || injuryType === 'burn_chemical') && (
+                  <ellipse cx="145" cy="155" rx="22" ry="34" fill={isBurnCovered ? '#e0f2fe' : '#ea580c'} fillOpacity={isBurnCovered ? 0.6 : 0.75} stroke={isCooled ? '#38bdf8' : '#b91c1c'} strokeWidth="2" />
+                )}
+                {injuryType === 'bite_sting' && (
+                  <g>
+                    <ellipse cx="145" cy="155" rx="22" ry="30" fill="#581c87" fillOpacity="0.4" />
+                    <circle cx="140" cy="152" r="3" fill="#7f1d1d" /><circle cx="150" cy="152" r="3" fill="#7f1d1d" />
+                  </g>
+                )}
+                </g>
+                {injuryType === 'arterial_bleed' && isTourniquetApplied && (
+                  <g transform={`translate(117, ${Math.max(30, 110 + armDy)})`}>
+                    <rect x="0" y="0" width="60" height="20" rx="4" fill="#ea580c" stroke="#7c2d12" strokeWidth="2" />
+                    <text x="30" y="14" textAnchor="middle" fill="#ffffff" fontSize="9" fontWeight="black">TQ</text>
                   </g>
                 )}
               </svg>
