@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { CHALLENGE_TOPICS, buildCaseFromTopicAndVariation, type ChallengeTopicDefinition } from "./data/caseLibrary";
 import type { ClinicalCase } from "./types/clinical";
+import { getSite, normalizeCaseAnatomy, sitesForRegions, validateCaseAnatomy } from "./data/anatomy";
 
 type Variation = ChallengeTopicDefinition["variations"][number];
 
@@ -14,6 +15,9 @@ async function generateVariationWithGroq(topic: ChallengeTopicDefinition): Promi
   const apiKey = process.env["GROQ_API_KEY"];
   if (!apiKey) throw new Error("AI generation is not configured");
   const example = topic.variations[0]!;
+  const allowedSites = sitesForRegions([
+    ...new Set(topic.variations.map((v) => getSite(v.anatomicalSite)?.region ?? topic.defaultBodyRegion)),
+  ]);
   const prompt = `You write realistic community-pharmacy emergency training cases for Ghana (Ghana STG 7th Ed).
 Topic: ${topic.topicTitle} (category: ${topic.category}, injury type: ${topic.injuryType}).
 Base complaint: ${topic.baseComplaint}
@@ -29,6 +33,7 @@ Create ONE brand-new patient variation. Respond ONLY with JSON of this exact sha
  "scenarioContext": string (1-2 sentences of how they arrived), "patientStatement": string (first-person quote),
  "vitals": {"heartRate": number, "bloodPressure": "120/80", "respiratoryRate": number, "oxygenSaturation": number, "temperature": number, "gcsOrAvpu": "Alert"|"Voice"|"Pain"|"Unresponsive"},
  "medicalHistory": string[], "currentMeds": string[], "allergies": string[], "twistSummary": string (one clinical twist),
+ "anatomicalSite": one of ${JSON.stringify(allowedSites)} (the ONE injured site; every sentence must describe this same site and side),
  "whyCorrect": string, "commonPitfalls": string, "safetyPearls": string
 }
 Example of style (do not copy): ${JSON.stringify(example)}`;
@@ -77,6 +82,7 @@ Example of style (do not copy): ${JSON.stringify(example)}`;
     currentMeds: Array.isArray(raw.currentMeds) ? raw.currentMeds.map(String) : [],
     allergies: Array.isArray(raw.allergies) ? raw.allergies.map(String) : [],
     twistSummary: String(raw.twistSummary ?? ""),
+    anatomicalSite: allowedSites.includes(raw.anatomicalSite) ? raw.anatomicalSite : example.anatomicalSite,
   };
   const education =
     raw.whyCorrect && raw.commonPitfalls && raw.safetyPearls
@@ -116,7 +122,7 @@ export const getNextCases = createServerFn({ method: "POST" })
     const result: ClinicalCase[] = [];
     for (const row of pool ?? []) {
       if (result.length >= data.count) break;
-      if (!skip.has(row.id)) result.push(row.case_data as unknown as ClinicalCase);
+      if (!skip.has(row.id)) result.push(normalizeCaseAnatomy(row.case_data as unknown as ClinicalCase));
     }
     const reused = result.length;
 
@@ -132,10 +138,15 @@ export const getNextCases = createServerFn({ method: "POST" })
         const { t, r } = g.value;
         const base = buildCaseFromTopicAndVariation({ ...t, variations: [r.variation] }, 0, now + i);
         const c: ClinicalCase = {
-          ...base,
+          ...normalizeCaseAnatomy(base),
           id: `ai-${crypto.randomUUID()}`,
           ...(r.education ? { educationalExplanations: r.education } : {}),
         };
+        const anatomyProblems = validateCaseAnatomy(c);
+        if (anatomyProblems.length) {
+          console.warn("Discarding AI case with conflicting anatomy", anatomyProblems);
+          continue;
+        }
         result.push(c);
         rows.push({ id: c.id, category: c.category, title: c.title, case_data: c as never, created_by: userId });
       }
