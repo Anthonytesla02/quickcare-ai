@@ -24,7 +24,8 @@ describe("case anatomy consistency", () => {
 
   it("repairs legacy cases without a site from their text", () => {
     const kojo = allCases.find((c) => c.patient.name === "Kojo Antwi")!;
-    const legacy = { ...kojo, anatomicalSite: undefined, affectedBodyRegion: "right_leg" as const };
+    const { anatomicalSite: _drop, ...rest } = kojo;
+    const legacy = { ...rest, affectedBodyRegion: "right_leg" as const };
     expect(normalizeCaseAnatomy(legacy).anatomicalSite).toBe("right_anterior_thigh");
     const arm = { ...legacy, presentingComplaint: "Windshield glass slashed brachial artery of right arm." };
     expect(normalizeCaseAnatomy(arm).affectedBodyRegion).toBe("right_arm");

@@ -76,7 +76,7 @@ export function sitesForRegions(regions: BodyRegion[]): string[] {
   return Object.values(ANATOMICAL_SITES).filter(s => regions.includes(s.region)).map(s => s.id);
 }
 
-type Mention = { key: string; limb: 'leg' | 'arm' | 'hand'; side?: 'right' | 'left'; text: string; index: number };
+type Mention = { key: string; limb: 'leg' | 'arm' | 'hand'; side?: 'right' | 'left' | undefined; text: string; index: number };
 
 function stripIgnored(text: string, ignored: string[] = []): string {
   let t = ` ${text.toLowerCase()} `;
