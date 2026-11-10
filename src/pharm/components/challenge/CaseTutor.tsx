@@ -9,12 +9,14 @@ import { Message, MessageContent, MessageResponse } from "@/components/ai-elemen
 import { PromptInput, PromptInputBody, PromptInputFooter, PromptInputSubmit, PromptInputTextarea } from "@/components/ai-elements/prompt-input";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import type { ClinicalCase } from "../../types/clinical";
+import { getCaseSite } from "../../data/anatomy";
 
 function buildContext(c: ClinicalCase) {
   const v = c.initialVitals;
   return [
     `Title: ${c.title} (${c.category}, ${c.difficulty})`,
     `Patient: ${c.patient.name}, ${c.patient.age}y ${c.patient.gender}`,
+    `Injury location: ${getCaseSite(c).label}`,
     `Complaint: ${c.presentingComplaint}`,
     `Patient says: ${c.patientStatement}`,
     c.caregiverStatement ? `Caregiver says: ${c.caregiverStatement}` : "",
